@@ -1,0 +1,11 @@
+{
+    "raw_data_csv_file": "C:/UserData/data_preparation_demo/raw_data/final_cleaned_diabetes.csv",
+    "input_data_path": "C:/UserData/data_preparation_demo/dataset/input/",
+    "label_name": "readmitted",
+    "headers_datasheet_name": "headers.csv",
+    "encoded_datasheet_name": "encoded.csv",
+    "output_dir": "C:/UserData/data_preparation_demo/dataset/output/",
+    "site_num": 4,
+    "site_name_prefix": "site",
+    "sample_rate": 1.0
+}
