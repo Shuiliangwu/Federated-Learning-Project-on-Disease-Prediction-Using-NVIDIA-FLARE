@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  site:
+    image: ${IMAGE_NAME}
+    container_name: ${SITE_NAME}
+    privileged: true
+    ipc: host
+    stdin_open: true
+    tty: true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      stack:
+        soft: 67108864
+        hard: 67108864
+    volumes:
+      - "./${SITE_NAME}/my-workspace:/workspace/my-workspace"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "${FILE1_PATH}:/workspace/temp/dataset"
+      - "${FILE2_PATH}:/workspace/temp/jobs"
+      - "${FILE3_PATH}:/workspace/temp/${ADMIN_NAME}"
+      - "${FILE4_PATH}:/workspace/temp/${SITE_NAME}"
+    working_dir: "/workspace/my-workspace"
+    environment:
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+      - SITE_NAME=${SITE_NAME}
+    command: >
+      /bin/bash -c "\
+      mkdir -p /home/${USER_NAME}/${SITE_NAME}/my-workspace && \
+      chmod -R 777 /workspace/my-workspace && \
+      cp -r /workspace/temp/dataset /workspace/my-workspace/dataset && \
+      cp -r /workspace/temp/jobs /workspace/my-workspace/jobs && \
+      cp -r /workspace/temp/${ADMIN_NAME} /workspace/my-workspace/${ADMIN_NAME} && \
+      cp -r /workspace/temp/${SITE_NAME} /workspace/my-workspace/${SITE_NAME} && \
+      apt update && \
+      apt install wget -y && \
+      echo Y | sh <(wget -qO - https://downloads.nordcdn.com/apps/linux/install.sh) && \
+      sleep 5 && \
+      /etc/init.d/nordvpn start && \
+      sleep 5 && \
+      nordvpn login --token ${ACCESS_TOKEN} && \
+      sleep 5 && \
+      nordvpn set meshnet on && \
+      sleep 5 && \
+      chmod -R 777 /workspace/my-workspace && \
+      while true; do \
+        # Clean the startup log
+        > /tmp/startup.log; \
+        # Run the startup script and check for success
+        /workspace/my-workspace/${SITE_NAME}/startup/start.sh 2>&1 | tee -a /tmp/startup.log && \
+        if grep -q 'Successfully registered client' /tmp/startup.log; then \
+          echo '==========>>>>>>>>>>>>> Client registration successful'; \
+        else \
+          echo '==========>>>>>>>>>>>>> Contact Server to run 'nordvpn meshnet peer list -f internal' and then restart the server. Retrying startup script...'; \
+        fi; \
+        sleep 5; \
+      done;
+      "
+
+volumes:
+  workspace:
